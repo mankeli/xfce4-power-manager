@@ -1,0 +1,131 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ xfce4-power-manager (1.6.1-0ubuntu1) devel; urgency=medium
+ .
+   * New upstream release.
+Author: Unit 193 <unit193@ubuntu.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: https://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: 2020-06-20
+
+--- xfce4-power-manager-1.6.1.orig/common/xfpm-brightness.c
++++ xfce4-power-manager-1.6.1/common/xfpm-brightness.c
+@@ -53,9 +53,9 @@ struct XfpmBrightnessPrivate
+     gboolean		helper_has_hw;
+ 
+     gint32		max_level;
+-    gint32		current_level;
+     gint32		min_level;
+-    gint32		step;
++
++    float level_gamma;
+ };
+ 
+ G_DEFINE_TYPE (XfpmBrightness, xfpm_brightness, G_TYPE_OBJECT)
+@@ -211,7 +211,6 @@ xfpm_brightness_setup_xrandr (XfpmBright
+ 	    {
+ 		ret = TRUE;
+ 		brightness->priv->output = brightness->priv->resource->outputs[i];
+-		brightness->priv->step =  max <= 20 ? 1 : max / 10;
+ 	    }
+ 
+ 	}
+@@ -242,7 +241,11 @@ xfpm_brightness_xrand_up (XfpmBrightness
+ 	return TRUE;
+     }
+ 
+-    set_level = MIN (hw_level + brightness->priv->step, brightness->priv->max_level );
++    brightness->priv->level_gamma += 0.05f;
++    if (brightness->priv->level_gamma > 1.f)
++        brightness->priv->level_gamma = 1.f;
++
++    set_level = brightness->priv->min_level + powf(brightness->priv->level_gamma, 2.2f) * (brightness->priv->max_level - brightness->priv->min_level);
+ 
+     g_warn_if_fail (xfpm_brightness_xrandr_set_level (brightness, brightness->priv->output, set_level));
+ 
+@@ -282,7 +285,11 @@ xfpm_brightness_xrand_down (XfpmBrightne
+ 	return TRUE;
+     }
+ 
+-    set_level = MAX (hw_level - brightness->priv->step, brightness->priv->min_level);
++    brightness->priv->level_gamma -= 0.05f;
++    if (brightness->priv->level_gamma > 1.f)
++        brightness->priv->level_gamma = 1.f;
++
++    set_level = brightness->priv->min_level + powf(brightness->priv->level_gamma, 2.2f) * (brightness->priv->max_level - brightness->priv->min_level);
+ 
+     g_warn_if_fail (xfpm_brightness_xrandr_set_level (brightness, brightness->priv->output, set_level));
+ 
+@@ -363,7 +370,6 @@ xfpm_brightness_setup_helper (XfpmBright
+ 	brightness->priv->helper_has_hw = TRUE;
+ 	brightness->priv->min_level = 0;
+ 	brightness->priv->max_level = ret;
+-	brightness->priv->step =  ret <= 20 ? 1 : ret / 10;
+     }
+ 
+     return brightness->priv->helper_has_hw;
+@@ -471,13 +477,12 @@ xfpm_brightness_helper_up (XfpmBrightnes
+ 	*new_level = brightness->priv->max_level;
+ 	return TRUE;
+     }
++ 
++    brightness->priv->level_gamma += 0.05f;
++    if (brightness->priv->level_gamma > 1.f)
++        brightness->priv->level_gamma = 1.f;
+ 
+-    gint32 safe_limit = brightness->priv->min_level + 1;
+-
+-    if (hw_level < safe_limit)
+-        set_level = safe_limit;
+-    else
+-        set_level = MIN (hw_level + brightness->priv->step, brightness->priv->max_level );
++    set_level = brightness->priv->min_level + powf(brightness->priv->level_gamma, 2.2f) * (brightness->priv->max_level - brightness->priv->min_level);
+ 
+ 
+     g_warn_if_fail (xfpm_brightness_helper_set_level (brightness, set_level));
+@@ -518,14 +523,13 @@ xfpm_brightness_helper_down (XfpmBrightn
+ 	return TRUE;
+     }
+ 
+-    gint32 safe_limit = brightness->priv->min_level + 1;
+-
+-    set_level = MAX (hw_level - brightness->priv->step, brightness->priv->min_level);
++    brightness->priv->level_gamma -= 0.05f;
++    if (brightness->priv->level_gamma < 0.f)
++        brightness->priv->level_gamma = 0.f;
+ 
+-    // don't drop to zero immediately
+-    if (hw_level > safe_limit && set_level == brightness->priv->min_level)
+-       set_level = safe_limit;
++    set_level = brightness->priv->min_level + powf(brightness->priv->level_gamma, 2.2f) * (brightness->priv->max_level - brightness->priv->min_level);
+ 
++    
+     g_warn_if_fail (xfpm_brightness_helper_set_level (brightness, set_level));
+ 
+     ret = xfpm_brightness_helper_get_level (brightness, new_level);
+@@ -568,9 +572,8 @@ xfpm_brightness_init (XfpmBrightness *br
+     brightness->priv->helper_has_hw = FALSE;
+     brightness->priv->max_level = 0;
+     brightness->priv->min_level = 0;
+-    brightness->priv->current_level = 0;
++    brightness->priv->level_gamma = 0.5f;
+     brightness->priv->output = 0;
+-    brightness->priv->step = 0;
+ }
+ 
+ static void

@@ -1,0 +1,14 @@
+Package: xfce4-power-manager-plugins-dbgsym
+Package-Type: ddeb
+Source: xfce4-power-manager
+Version: 1.6.1-0ubuntu1
+Auto-Built-Package: debug-symbols
+Architecture: amd64
+Maintainer: Xubuntu Developers <xubuntu-devel@lists.ubuntu.com>
+Installed-Size: 124
+Depends: xfce4-power-manager-plugins (= 1.6.1-0ubuntu1)
+Section: debug
+Priority: optional
+Description: debug symbols for xfce4-power-manager-plugins
+Build-Ids: 4eff9f1acbff01622155f8cad07d476184732701
+Original-Maintainer: Debian Xfce Maintainers <pkg-xfce-devel@lists.alioth.debian.org>

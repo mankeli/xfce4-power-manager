@@ -1,0 +1,6 @@
+xfce4-power-manager-data_1.6.1-0ubuntu1_all.deb xfce optional
+xfce4-power-manager-dbgsym_1.6.1-0ubuntu1_amd64.ddeb debug optional
+xfce4-power-manager-plugins-dbgsym_1.6.1-0ubuntu1_amd64.ddeb debug optional
+xfce4-power-manager-plugins_1.6.1-0ubuntu1_amd64.deb xfce optional
+xfce4-power-manager_1.6.1-0ubuntu1_amd64.buildinfo xfce optional
+xfce4-power-manager_1.6.1-0ubuntu1_amd64.deb xfce optional

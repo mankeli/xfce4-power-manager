@@ -1,0 +1,4 @@
+debian/tmp/usr/share/locale
+debian/tmp/usr/share/icons
+debian/tmp/usr/share/appdata/xfce4-power-manager.appdata.xml
+debian/tmp/usr/share/man
